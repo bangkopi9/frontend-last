@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Planville AI Chatbot</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 📌 Sidebar FAQ -->
+  <div class="faq-sidebar">
+    <h2>Frequently Asked Questions</h2>
+    <ul id="faq-list"></ul>
+  </div>
+
+  <!-- 💬 Main Chatbot UI -->
+  <div class="chatbot-container">
+    <div class="chatbot-header">
+      <img src="planville-logo.png" alt="Planville Logo" class="chatbot-logo"/>
+      <h1>Chat with Planville AI</h1>
+      <label class="switch">
+        <input type="checkbox" id="modeToggle" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="chatbot-log"></div>
+    <div id="typing-bubble" class="chatbot-message bot-message typing-bubble" style="display:none">...</div>
+
+    <form id="chatbot-form">
+      <input type="text" id="chatbot-input" placeholder="Type your question..." autocomplete="off"/>
+      <button type="submit">💬</button>
+    </form>
+
+    <div class="language-switcher">
+      <label for="langSwitcher">🌐 Language:</label>
+      <select id="langSwitcher">
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="en">🇬🇧 English</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 📋 CONFIGURATOR FORM (SIMPLE) -->
+  <div id="configForm" class="config-form" style="display: none;">
+    <h2>Produkt wählen</h2>
+    <select id="productSelect">
+      <option value="">Bitte auswählen</option>
+      <option value="PV-Anlage">PV-Anlage</option>
+      <option value="Dachsanierung">Dachsanierung</option>
+      <option value="Wärmepumpe">Wärmepumpe</option>
+      <option value="Klimaanlage">Klimaanlage</option>
+      <option value="Speicherlösung">Speicherlösung</option>
+    </select>
+
+    <h2>Kontaktdaten</h2>
+    <input type="text" id="vorname" placeholder="Vorname" required />
+    <input type="text" id="nachname" placeholder="Nachname" required />
+    <input type="tel" id="telefon" placeholder="Telefonnummer" required />
+    <button id="submitConfig">Absenden</button>
+  </div>
+
+  <!-- 🎯 FORM WIZARD (DOUBLE CLICK MODE) -->
+  <div class="form-wizard" id="form-wizard" style="display:none">
+    <h2>Jetzt starten</h2>
+    <label for="product-choice">Produkt wählen:</label>
+    <select id="product-choice">
+      <option value="Photovoltaik">Photovoltaik</option>
+      <option value="Wärmepumpe">Wärmepumpe</option>
+      <option value="Klimaanlage">Klimaanlage</option>
+      <option value="Dachsanierung">Dachsanierung</option>
+    </select>
+
+    <label for="fname">Vorname:</label>
+    <input type="text" id="fname" required />
+
+    <label for="lname">Nachname:</label>
+    <input type="text" id="lname" required />
+
+    <label for="phone">Telefonnummer:</label>
+    <input type="tel" id="phone" required />
+
+    <button onclick="submitLead()">Absenden</button>
+  </div>
+
+  <!-- 🍪 Cookie Consent -->
+  <div id="cookie-banner" class="cookie-popup">
+    <p id="cookie-message">Diese Website verwendet Cookies, um Ihr Erlebnis zu verbessern.</p>
+    <div class="cookie-buttons">
+      <button onclick="acceptCookies()">Akzeptieren</button>
+      <button onclick="rejectCookies()">Ablehnen</button>
+      <button onclick="openSettings()">Einstellungen</button>
+    </div>
+  </div>
+
+  <!-- ⚙️ Chatbot Logic -->
+  <script src="chatbot.js" defer></script>
+
+  <!-- 🧠 GA4 & Event Tracking -->
+  <script>
+    function enableGTM() {
+      const script = document.createElement("script");
+      script.src = "https://www.googletagmanager.com/gtag/js?id=G-YL8ECJ5V17";
+      script.async = true;
+      document.head.appendChild(script);
+
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){ dataLayer.push(arguments); }
+      window.gtag = gtag;
+      gtag('js', new Date());
+      gtag('config', 'G-YL8ECJ5V17');
+    }
+
+    function trackChatEvent(question, lang) {
+      if (typeof gtag !== "undefined") {
+        gtag('event', 'chat_message', {
+          'event_category': 'chatbot',
+          'event_label': question,
+          'language': lang
+        });
+      }
+    }
+
+    function trackFAQClick(text) {
+      if (typeof gtag !== "undefined") {
+        const selectedLang = document.getElementById("langSwitcher").value;
+        gtag('event', 'faq_click', {
+          'event_category': 'faq',
+          'event_label': text,
+          'language': selectedLang
+        });
+      }
+    }
+
+    function trackConfigStart() {
+      if (typeof gtag !== "undefined") {
+        gtag('event', 'start_config_click', {
+          'event_category': 'konfigurator',
+          'event_label': 'Jetzt starten'
+        });
+      }
+    }
+
+    function trackConfigSubmit(product) {
+      if (typeof gtag !== "undefined") {
+        gtag('event', 'config_submit_success', {
+          'event_category': 'konfigurator',
+          'event_label': product
+        });
+      }
+    }
+
+    function acceptCookies() {
+      localStorage.setItem("cookieConsent", "accepted");
+      document.getElementById("cookie-banner").style.display = "none";
+      enableGTM();
+    }
+
+    function rejectCookies() {
+      localStorage.setItem("cookieConsent", "rejected");
+      document.getElementById("cookie-banner").style.display = "none";
+    }
+
+    function openSettings() {
+      alert("Einstellungsseite ist noch in Entwicklung.");
+    }
+
+    function submitLead() {
+      const leadData = {
+        produkt: document.getElementById("product-choice").value,
+        vorname: document.getElementById("fname").value,
+        nachname: document.getElementById("lname").value,
+        telefon: document.getElementById("phone").value,
+      };
+
+      const sheetURL = "https://script.google.com/macros/s/YOUR-SCRIPT-ID/exec";
+
+      fetch(sheetURL, {
+        method: "POST",
+        body: JSON.stringify(leadData),
+        headers: { "Content-Type": "application/json" }
+      })
+      .then((res) => {
+        if (res.ok) {
+          alert("Vielen Dank! Wir melden uns bald.");
+          if (typeof gtag !== "undefined") {
+            gtag('event', 'wizard_submit', {
+              event_category: 'leadform',
+              event_label: leadData.produkt
+            });
+          }
+          document.getElementById("form-wizard").style.display = "none";
+          document.getElementById("startConfigBtn").style.display = "block";
+        } else {
+          alert("Fehler beim Absenden. Bitte erneut versuchen.");
+        }
+      })
+      .catch((err) => {
+        console.error("Fehler beim Formular:", err);
+        alert("Verbindung fehlgeschlagen.");
+      });
+    }
+
+    window.onload = function () {
+      const consent = localStorage.getItem("cookieConsent");
+      if (!consent) {
+        document.getElementById("cookie-banner").style.display = "block";
+      } else if (consent === "accepted") {
+        enableGTM();
+      }
+
+      document.getElementById("startConfigBtn")?.addEventListener("click", () => {
+        document.getElementById("configForm").style.display = "block";
+        document.getElementById("startConfigBtn").style.display = "none";
+        trackConfigStart();
+      });
+
+      document.getElementById("startConfigBtn")?.addEventListener("dblclick", () => {
+        document.getElementById("form-wizard").style.display = "block";
+        document.getElementById("startConfigBtn").style.display = "none";
+      });
+
+      document.getElementById("submitConfig").addEventListener("click", async () => {
+        const product = document.getElementById("productSelect").value;
+        const vorname = document.getElementById("vorname").value.trim();
+        const nachname = document.getElementById("nachname").value.trim();
+        const telefon = document.getElementById("telefon").value.trim();
+
+        if (!product || !vorname || !nachname || !telefon) {
+          alert("Bitte alle Felder ausfüllen.");
+          return;
+        }
+
+        const payload = { vorname, nachname, telefon, product };
+
+        try {
+          const res = await fetch("http://localhost:8000/save-config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          if (res.ok) {
+            alert("Danke! Wir haben Ihre Anfrage erhalten.");
+            trackConfigSubmit(product);
+            document.getElementById("configForm").reset();
+            document.getElementById("configForm").style.display = "none";
+          } else {
+            alert("Fehler beim Senden. Bitte versuchen Sie es später erneut.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Serverfehler. Bitte später erneut versuchen.");
+        }
+      });
+
+      // ✅ Initial Bot Greeting
+      setTimeout(() => {
+        appendMessage("Hallo! 👋 Was kann ich für Sie tun?<br>Bitte wählen Sie ein Thema:", "bot");
+        showProductOptions();
+      }, 1000);
+    };
+
+    function showProductOptions() {
+      const productOptions = [
+        "Photovoltaikanlage ☀️",
+        "Klimaanlage ❄️",
+        "Wärmepumpe 🔥",
+        "Mieterstrom 🏠",
+        "Dachsanierung 🛠️"
+      ];
+      const container = document.createElement("div");
+      container.className = "product-options";
+
+      productOptions.forEach(product => {
+        const button = document.createElement("button");
+        button.innerText = product;
+        button.className = "product-button";
+        button.onclick = () => handleProductSelection(product);
+        container.appendChild(button);
+      });
+
+      document.getElementById("chatbot-log").appendChild(container);
+      scrollToBottom();
+    }
+
+    function handleProductSelection(product) {
+      appendMessage(product, "user");
+
+      setTimeout(() => {
+        appendMessage(`Was möchten Sie genau zu <b>${product}</b> wissen oder erreichen?`, "bot");
+      }, 500);
+    }
+
+    function handleFinalUserInput(userText) {
+      appendMessage(userText, "user");
+      setTimeout(() => {
+        appendMessage(
+          `Vielen Dank! 😊 Unser Team hilft Ihnen gerne weiter.<br><br>
+          Für eine persönliche Beratung klicken Sie bitte auf den Button unten:`,
+          "bot"
+        );
+        const btn = document.createElement("a");
+        btn.href = "https://planville.de/kontakt";
+        btn.target = "_blank";
+        btn.className = "cta-button";
+        btn.innerText = "💬 Jetzt Kontakt aufnehmen";
+        document.getElementById("chatbot-log").appendChild(btn);
+        scrollToBottom();
+      }, 1000);
+    }
+  </script>
+
+  <script src="i18n_privacy.js"></script>
+  <script src="privacy_consent.js"></script>
+  <script src="experiment_flags.js"></script>
+  <script src="funnel_engine_v2.js"></script>
+  <script src="ai_guardrails_v2.js"></script>
+  <script src="schedule_stub.js"></script>
+  <script src="contact_cta.js"></script>
+
+  <!-- ⬇️ Tambahan: form in-chat & auto-open setelah funnel -->
+  <script src="lead_form.js"></script>
+  <script src="funnel_hooks.js"></script>
+
+</body>
+</html>

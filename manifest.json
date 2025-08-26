@@ -1,0 +1,15 @@
+{
+  "name": "Planville AI Chatbot",
+  "short_name": "PlanvilleBot",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#101820",
+  "theme_color": "#64ffda",
+  "icons": [
+    {
+      "src": "planville-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
