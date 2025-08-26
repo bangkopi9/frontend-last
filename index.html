@@ -98,14 +98,15 @@
     </div>
   </div>
 
-  <!-- 🧠 Misc helpers & tracking -->
+  <!-- 🧠 Helpers & tracking (dipakai banyak file) -->
   <script>
-    // Ekspor bahasa agar dipakai file lain (lead_form.js, dsb)
-    function getCurrentLang(){
-      const el = document.getElementById("langSwitcher");
-      return el ? el.value : (window.CONFIG?.LANG_DEFAULT || "de");
+    // Pastikan tersedia lebih awal untuk lead_form.js, dll
+    if (!window.getCurrentLang) {
+      window.getCurrentLang = function(){
+        const el = document.getElementById("langSwitcher");
+        return el ? el.value : (window.CONFIG?.LANG_DEFAULT || "de");
+      };
     }
-    window.getCurrentLang = getCurrentLang;
 
     // GA4 (opsional): aktif kalau user accept cookies
     function enableGTM() {
@@ -164,79 +165,14 @@
     function openSettings() {
       alert("Einstellungsseite ist noch in Entwicklung.");
     }
-  </script>
 
-  <!-- 🤖 Chat logics ringan (greeting & CTA) -->
-  <script>
-    function appendMessage(html, who="bot"){
-      const log = document.getElementById("chatbot-log");
-      const div = document.createElement("div");
-      div.className = `chatbot-message ${who}-message`;
-      div.innerHTML = html;
-      log.appendChild(div);
-      log.scrollTop = log.scrollHeight;
-    }
-    function scrollToBottom(){
-      const log = document.getElementById("chatbot-log");
-      log.scrollTop = log.scrollHeight;
-    }
-
-    function showProductOptions() {
-      const productOptions = [
-        "Photovoltaikanlage ☀️",
-        "Klimaanlage ❄️",
-        "Wärmepumpe 🔥",
-        "Mieterstrom 🏠",
-        "Dachsanierung 🛠️"
-      ];
-      const container = document.createElement("div");
-      container.className = "product-options";
-
-      productOptions.forEach(product => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.innerText = product;
-        button.className = "product-button";
-        button.onclick = () => handleProductSelection(product);
-        container.appendChild(button);
-      });
-
-      document.getElementById("chatbot-log").appendChild(container);
-      scrollToBottom();
-    }
-
-    function handleProductSelection(product) {
-      appendMessage(product, "user");
-      setTimeout(() => {
-        appendMessage(`Was möchten Sie genau zu <b>${product}</b> wissen oder erreichen?`, "bot");
-      }, 500);
-    }
-
-    function handleFinalUserInput(userText) {
-      appendMessage(userText, "user");
-      setTimeout(() => {
-        appendMessage(
-          `Vielen Dank! 😊 Unser Team hilft Ihnen gerne weiter.<br><br>
-          Für eine persönliche Beratung klicken Sie bitte auf den Button unten:`,
-          "bot"
-        );
-        const btn = document.createElement("a");
-        btn.href = CONFIG?.CTA_URL || "https://planville.de/kontakt";
-        btn.target = "_blank";
-        btn.className = "cta-button";
-        btn.innerText = (getCurrentLang()==="de") ? "💬 Jetzt Kontakt aufnehmen" : "💬 Contact us";
-        document.getElementById("chatbot-log").appendChild(btn);
-        scrollToBottom();
-      }, 800);
-    }
-
-    // onload init
+    // Tampilkan banner saat load kalau belum ada consent
     window.addEventListener("load", () => {
       const consent = localStorage.getItem("cookieConsent");
       if (!consent) document.getElementById("cookie-banner").style.display = "block";
       else if (consent === "accepted") enableGTM();
 
-      // optional buttons (kalau ada)
+      // Optional sample config form triggers
       document.getElementById("startConfigBtn")?.addEventListener("click", () => {
         document.getElementById("configForm").style.display = "block";
         document.getElementById("startConfigBtn").style.display = "none";
@@ -261,7 +197,6 @@
         const payload = { vorname, nachname, telefon, product };
 
         try {
-          // contoh stub post; ganti dengan endpoint kamu jika perlu
           await window.api.track({event:"config_submit_click", payload});
           alert("Danke! Wir haben Ihre Anfrage erhalten.");
           trackConfigSubmit(product);
@@ -272,21 +207,12 @@
           alert("Serverfehler. Bitte später erneut versuchen.");
         }
       });
-
-      // ✅ Initial Bot Greeting
-      setTimeout(() => {
-        const hello = (getCurrentLang()==="de")
-          ? "Hallo! 👋 Was kann ich für Sie tun?<br>Bitte wählen Sie ein Thema:"
-          : "Hi! 👋 How can I help you today?<br>Please choose a topic:";
-        appendMessage(hello, "bot");
-        showProductOptions();
-      }, 400);
     });
   </script>
 
   <!-- 🔠 i18n & lainnya (jika kamu pakai) -->
   <script src="i18n_privacy.js"></script>
-  <!-- <script src="privacy_consent.js"></script>  --> <!-- optional: hanya jika file-nya clean -->
+  <!-- <script src="privacy_consent.js"></script> --> <!-- optional: hanya jika file-nya clean -->
 
   <!-- 🔩 Funnel + Guardrails + CTA -->
   <script src="funnel_engine_v2.js"></script>
@@ -298,7 +224,7 @@
   <script src="lead_form.js"></script>
   <script src="funnel_hooks.js"></script>
 
-  <!-- 🤖 Chat engine utama (pastikan pakai api.aiAnswer / stream) -->
+  <!-- 🤖 Chat engine utama (pakai AIGuard + funnel) -->
   <script src="chatbot.js" defer></script>
 </body>
 </html>
