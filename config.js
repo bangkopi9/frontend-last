@@ -1,7 +1,7 @@
 // 🌍 Global Config for Deployment & Local Testing
 const CONFIG = {
   // ✅ Gunakan ini saat testing lokal
-  BASE_API_URL: "https://full-ai-backend-production.up.railway.app", // ⬅️ ubah dari "https://your-backend-url.com"
+  BASE_API_URL: "web-production-352d9.up.railway.app", // ⬅️ ubah dari "https://your-backend-url.com"
   
   // 🌐 Saat nanti deploy ke Render atau Railway, ganti dengan domain backend kamu
   // BASE_API_URL: "https://full-ai-backend-production.up.railway.app", // contoh jika sudah live
